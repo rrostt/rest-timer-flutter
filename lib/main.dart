@@ -32,12 +32,6 @@ class MyHomeState extends State<MyHome> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-    model.savePrefs();
-  }
-
-  @override
   void deactivate() {
     super.deactivate();
     model.savePrefs();
