@@ -1,4 +1,4 @@
-package com.example.firstflutter;
+package me.rost.resttimerflutter;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;
