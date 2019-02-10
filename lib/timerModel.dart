@@ -1,5 +1,6 @@
 import 'package:scoped_model/scoped_model.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 
 List<List<int>> zip(List<int> a, List<int> b) {
   final List<List<int>> list = [];
@@ -23,7 +24,27 @@ class TimerModel extends Model {
   static final defaultNowProvider = () => DateTime.now().millisecondsSinceEpoch;
   final nowProvider;
 
-  TimerModel({ nowProvider }) : this.nowProvider = nowProvider ?? defaultNowProvider {}
+  TimerModel({ nowProvider }) : this.nowProvider = nowProvider ?? defaultNowProvider;
+
+  // init
+  void loadPrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    _restPeriod = prefs.getInt('rest-period') ?? _restPeriod;
+    var exercisesString = prefs.getString('exercises') ?? '';
+    _exercises = {};
+    exercisesString.split(',').forEach((name) {
+      if (name != '') {
+        _exercises[name] = new ExerciseInfo(count: 0);
+      }
+    });
+    notifyListeners();
+  }
+
+  void savePrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('rest-period', _restPeriod);
+    await prefs.setString('exercises', _exercises.keys.join(','));
+  }
 
   // internal data
   Timer _timer;
@@ -36,6 +57,8 @@ class TimerModel extends Model {
     'squats': ExerciseInfo(count: 0),
     'pullups': ExerciseInfo(count: 0),
   };
+
+  int _restPeriod = 90;
 
   // getters
   int get time => _time - _startedAt;
@@ -52,6 +75,13 @@ class TimerModel extends Model {
   bool get isStarted => _startedAt != 0;
 
   List<Map> get exercises => _exercises.keys.map((text) => {'text': text, 'count': _exercises[text].count}).toList();
+
+  int get restPeriod => _restPeriod;
+
+  void setRestPeriod(int restPeriod) {
+    _restPeriod = restPeriod;
+    notifyListeners();
+  }
 
   void tick() {
     setTime(nowProvider());
@@ -105,12 +135,15 @@ class TimerModel extends Model {
       return false;
     } else {
       _exercises.putIfAbsent(name, () => ExerciseInfo(count: 0));
+      notifyListeners();
+      savePrefs();
       return true;
     }
   }
 
-  bool removeExercise(String name) {
+  void removeExercise(String name) {
     _exercises.remove(name);
     notifyListeners();
+    savePrefs();
   }
 }

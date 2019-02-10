@@ -26,6 +26,24 @@ class MyHomeState extends State<MyHome> {
   int _currentIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    model.loadPrefs();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    model.savePrefs();
+  }
+
+  @override
+  void deactivate() {
+    super.deactivate();
+    model.savePrefs();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final tabs = [
       ScopedModel<TimerModel>(
@@ -74,7 +92,7 @@ class MyContent extends StatelessWidget {
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Container(
-            padding: EdgeInsets.fromLTRB(0, 50, 0, 0),
+            padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
@@ -98,6 +116,7 @@ class Settings extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: <Widget>[
+          RestPeriodSettings(),
           ExerciseSettings(),
         ],
       ),
@@ -105,21 +124,91 @@ class Settings extends StatelessWidget {
   }
 }
 
+class RestPeriodSettings extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ScopedModelDescendant<TimerModel>(builder: (context, child, model) {
+      var onChanged = (value) { model.setRestPeriod(value.toInt()); };
+      return _buildCard(model.restPeriod, onChanged);
+    },);
+  }
+
+  Widget _buildCard(int restPeriod, onChanged) {
+    return Card(child: Row(children: <Widget>[
+      Padding(padding: EdgeInsets.all(16.0), child: Column(children: <Widget>[Icon(Icons.timer),Text('${restPeriod}s', style: TextStyle(fontSize: 10))]),),
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+        Padding(padding: EdgeInsets.only(left: 16), child: Text('Rest period', style: TextStyle(fontSize: 16)),),
+        Slider(value: restPeriod.toDouble(), onChanged: onChanged, min: 0, max: 180,),
+        Row(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
+          FlatButton(child: Text('60S'), textColor: Colors.blue[700], onPressed: () { onChanged(60); },),
+          FlatButton(child: Text('90S'), textColor: Colors.blue[700], onPressed: () { onChanged(90); },),
+          FlatButton(child: Text('2 MINS'), textColor: Colors.blue[700], onPressed: () { onChanged(120); },),
+        ],)
+      ],))
+    ],),);
+  }
+}
+
 class ExerciseSettings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScopedModelDescendant<TimerModel>(builder: (context, child, model) {
-      List <Widget> children = model.exercises.map<Widget>((exercise) =>
+      List <Widget> exercises = model.exercises.map<Widget>((exercise) =>
             ListTile(
               title: Text(exercise['text']),
               leading: Icon(Icons.subject),
               trailing: IconButton(icon: Icon(Icons.delete),onPressed: () => model.removeExercise(exercise['text']),),
             )
           ).toList();
-      return Column(
-        children: children
-      );
+      List<Widget> children = List.from(exercises);
+      children.add(AddExercise());
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+        Padding(padding: EdgeInsets.all(16), child: Text('Exercises', style: TextStyle(fontSize: 16)),),
+        Card(child: Column(
+          children: children
+        ),),
+      ]);
     },);
+  }
+}
+
+class AddExercise extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    return AddExerciseState();
+  }
+}
+
+class AddExerciseState extends State<AddExercise> {
+  final controller = TextEditingController();
+  String error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(left: 16, right: 16),
+      child: Column(children: <Widget>[
+        Row(children: <Widget>[
+          Expanded(child: TextField(controller: controller,),),
+          IconButton(icon: Icon(Icons.add), onPressed: () {
+            if (controller.text != '') {
+              if (!ScopedModel.of<TimerModel>(context).addExercise(controller.text)) {
+                setState(() {
+                  error = '"${controller.text}" already exists';
+                });
+              } else {
+                setState(() {
+                  error = null;
+                });
+                controller.text = '';
+              }
+            }
+            FocusScope.of(context).requestFocus(new FocusNode());
+          }),
+        ],),
+        error != null ? Text(error, style: TextStyle(color: Colors.red[700])) : Container()
+      ]),
+    );
   }
 }
 
@@ -223,10 +312,10 @@ class SplitTimes extends StatelessWidget {
 String formatTime(time) {
   int minutes = (time / (1000 * 60)).floor();
   int seconds = (time / 1000).floor() % 60;
-  int hundreds = (time / 10).floor() % 100;
+  int tens = (time / 100).floor() % 10;
   String secondsString = "$seconds".padLeft(2, '0');
-  String hundredsString = "$hundreds".padLeft(2, '0');
-  return "$minutes:$secondsString.$hundredsString";
+  String tensString = "$tens".padLeft(1, '0');
+  return "$minutes:$secondsString.$tensString";
 }
 
 class SplitTimeWidget extends StatelessWidget {
@@ -247,14 +336,15 @@ class TimerWidget extends StatelessWidget {
           onTap: () {
             model.split();
           },
-          child: TimerText(model.currentSplitTime));
+          child: TimerText(model.currentSplitTime, model.currentSplitTime >= model.restPeriod * 1000));
     });
   }
 }
 
 class TimerText extends StatelessWidget {
   final int time;
-  TimerText(this.time);
+  final bool restOver;
+  TimerText(this.time, this.restOver);
 
   @override
   Widget build(BuildContext context) {
@@ -264,7 +354,7 @@ class TimerText extends StatelessWidget {
         children: <Widget>[
           Text(formatTime(time),
               style: TextStyle(
-                  fontSize: 72, color: Colors.black, fontFamily: 'monospace'))
+                  fontSize: 72, color: restOver ? Colors.red[700] : Colors.black, fontFamily: 'monospace'))
         ]);
   }
 }
