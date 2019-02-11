@@ -10,19 +10,9 @@ class SplitTimes extends StatelessWidget {
       print(model.splitTimes);
       return Column(
         children: model.splitTimes.reversed
-            .map((time) => SplitTimeWidget(time))
+            .map((time) => Text(formatTime(time)))
             .toList(),
       );
     });
-  }
-}
-
-class SplitTimeWidget extends StatelessWidget {
-  final int time;
-  SplitTimeWidget(this.time);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(formatTime(time));
   }
 }

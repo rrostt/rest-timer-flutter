@@ -11,19 +11,12 @@ class TimerWidget extends StatelessWidget {
           onTap: () {
             model.split();
           },
-          child: TimerText(model.currentSplitTime,
+          child: _buildTextRow(model.currentSplitTime,
               model.currentSplitTime >= model.restPeriod * 1000));
     });
   }
-}
 
-class TimerText extends StatelessWidget {
-  final int time;
-  final bool restOver;
-  TimerText(this.time, this.restOver);
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTextRow(time, restOver) {
     return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,
