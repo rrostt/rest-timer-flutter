@@ -1,6 +1,7 @@
 import 'package:scoped_model/scoped_model.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:screen/screen.dart';
 
 List<List<int>> zip(List<int> a, List<int> b) {
   final List<List<int>> list = [];
@@ -108,12 +109,16 @@ class TimerModel extends Model {
     _timer = new Timer.periodic(new Duration(milliseconds: 50), (Timer t) {
       tick();
     });
+
+    Screen.keepOn(true);
   }
 
   void stop() {
     if (_timer != null)
       _timer.cancel();
     _timer = null;
+
+    Screen.keepOn(false);
   }
 
   void reset() {
