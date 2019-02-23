@@ -10,14 +10,7 @@ class ExerciseSettings extends StatelessWidget {
     return ScopedModelDescendant<TimerModel>(
       builder: (context, child, model) {
         List<Widget> exercises = model.exercises
-            .map<Widget>((exercise) => ListTile(
-                  title: Text(exercise['text']),
-                  leading: Icon(Icons.subject),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () => model.removeExercise(exercise['text']),
-                  ),
-                ))
+            .map<Widget>((exercise) => ExerciseListEntry(exercise: exercise, model: model))
             .toList();
         List<Widget> children = List.from(exercises);
         children.add(AddExercise());
@@ -32,6 +25,39 @@ class ExerciseSettings extends StatelessWidget {
                 child: Column(children: children),
               ),
             ]);
+      },
+    );
+  }
+}
+
+class ExerciseListEntry extends StatelessWidget {
+  final exercise;
+  final model;
+
+  ExerciseListEntry({@required this.exercise, @required this.model});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dismissible(
+      key: Key(exercise['text']),
+      child: ListTile(
+          title: Text(exercise['text']),
+          leading: Icon(Icons.subject),
+        ),
+      background: Container(decoration: BoxDecoration(color: Colors.red[900])),
+      onDismissed: (direction) {
+        model.removeExercise(exercise['text']);
+        Scaffold.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Removed ${exercise['text']}'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                model.addExercise(exercise['text']);
+              },
+            ),
+          )
+        );
       },
     );
   }
