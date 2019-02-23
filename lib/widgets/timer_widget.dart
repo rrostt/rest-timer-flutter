@@ -16,7 +16,7 @@ class TimerWidget extends StatelessWidget {
     });
   }
 
-  Widget _buildTextRow(time, restOver) {
+  Widget _buildTextRow(int time, bool restOver) {
     return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,

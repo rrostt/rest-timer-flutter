@@ -7,7 +7,6 @@ class SplitTimes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScopedModelDescendant<TimerModel>(builder: (context, child, model) {
-      print(model.splitTimes);
       return Column(
         children: model.splitTimes.reversed
             .map((time) => Text(formatTime(time)))

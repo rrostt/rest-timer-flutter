@@ -1,4 +1,4 @@
-String formatTime(time) {
+String formatTime(int time) {
   int minutes = (time / (1000 * 60)).floor();
   int seconds = (time / 1000).floor() % 60;
   int tens = (time / 100).floor() % 10;
